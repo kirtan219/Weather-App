@@ -392,6 +392,7 @@ main {
   padding: 12px;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
+  flex-wrap: wrap;
 }
 
 .nav-link {
@@ -401,6 +402,12 @@ main {
   border-radius: 8px;
   transition: var(--transition);
   font-weight: 500;
+  min-width: 150px;
+  text-align: center;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-link:hover {
@@ -410,6 +417,24 @@ main {
 .nav-link.active {
   background-color: var(--secondary-color);
   color: white;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .nav-link {
+    width: 100%;
+    min-width: unset;
+    border-radius: 8px !important;
+    margin: 0;
+  }
+  .nav-link.active {
+    border-radius: 8px !important;
+  }
 }
 
 /* Weather suggestion styles */
