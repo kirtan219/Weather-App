@@ -287,6 +287,16 @@ app.get('/', (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-}); 
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is in use. Trying a different port...`);
+    const server2 = app.listen(0, () => {
+      const newPort = server2.address().port;
+      console.log(`Server running on http://localhost:${newPort}`);
+    });
+  } else {
+    throw err;
+  }
+});

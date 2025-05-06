@@ -19,10 +19,16 @@
     <div class="container">
         <header>
             <h1>Weather Forecast</h1>
+            
+            <nav class="navbar">
+                <a href="index.html" class="nav-link active"><i class="fas fa-cloud-sun"></i> Current Weather</a>
+                <a href="patterns.html" class="nav-link"><i class="fas fa-chart-line"></i> Weather Patterns</a>
+            </nav>
+            
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="Enter city name...">
-                <button id="search-btn"><i class="fas fa-search"></i></button>
-                <button id="location-btn"><i class="fas fa-map-marker-alt"></i></button>
+                <button id="search-btn" title="Search for city"><i class="fas fa-search"></i></button>
+                <button id="location-btn" title="Use current location"><i class="fas fa-map-marker-alt"></i></button>
             </div>
         </header>
 
@@ -86,6 +92,15 @@
                             <p id="cloudiness"></p>
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <div class="weather-suggestion">
+                <h3><i class="fas fa-lightbulb"></i> Weather Suggestions</h3>
+                <div class="suggestion-content">
+                    <div class="suggestion-row" id="activity-suggestion"></div>
+                    <div class="suggestion-row" id="clothing-suggestion"></div>
+                    <div class="suggestion-row" id="health-tip"></div>
                 </div>
             </div>
             

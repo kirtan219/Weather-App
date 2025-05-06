@@ -21,12 +21,27 @@ const visibility = document.getElementById('visibility');
 const cloudiness = document.getElementById('cloudiness');
 const forecastCards = document.getElementById('forecast-cards');
 
+// Weather Suggestion Elements
+const activitySuggestion = document.getElementById('activity-suggestion');
+const clothingSuggestion = document.getElementById('clothing-suggestion');
+const healthTip = document.getElementById('health-tip');
+
 // Default city
 let defaultCity = 'London';
 let map = null;
 
+// DOM Elements for suggestions
+const suggestionsContainer = document.createElement('div');
+suggestionsContainer.className = 'suggestions-container';
+searchInput.parentNode.appendChild(suggestionsContainer);
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if there's a selected city from the patterns page
+    const savedCity = localStorage.getItem('selectedCity');
+    if (savedCity) {
+        defaultCity = savedCity;
+    }
     getWeatherData(defaultCity);
 });
 
@@ -61,6 +76,68 @@ locationBtn.addEventListener('click', () => {
         );
     } else {
         showError('Geolocation is not supported by your browser.');
+    }
+});
+
+// Fetch city suggestions
+async function fetchCitySuggestions(query) {
+    try {
+        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`;
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.results || [];
+    } catch (error) {
+        console.error('Error fetching city suggestions:', error);
+        return [];
+    }
+}
+
+// Display city suggestions with icons
+function displayCitySuggestions(suggestions) {
+    suggestionsContainer.innerHTML = '';
+    suggestions.forEach((suggestion) => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'suggestion-item';
+        suggestionItem.innerHTML = `
+            <span>${suggestion.name}, ${suggestion.country}</span>
+            <i class="fas fa-map-marker-alt"></i>
+        `;
+        suggestionItem.addEventListener('click', () => {
+            searchInput.value = suggestion.name;
+            suggestionsContainer.innerHTML = '';
+            getWeatherData(suggestion.name);
+        });
+        suggestionsContainer.appendChild(suggestionItem);
+    });
+
+    // Show "No results found" if no suggestions
+    if (suggestions.length === 0) {
+        const noResultsItem = document.createElement('div');
+        noResultsItem.className = 'suggestion-item';
+        noResultsItem.textContent = 'No results found';
+        suggestionsContainer.appendChild(noResultsItem);
+    }
+}
+
+// Event listener for input changes with debounce
+let debounceTimeout;
+searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimeout);
+    const query = searchInput.value.trim();
+    if (query.length > 2) {
+        debounceTimeout = setTimeout(async () => {
+            const suggestions = await fetchCitySuggestions(query);
+            displayCitySuggestions(suggestions);
+        }, 300); // Debounce delay of 300ms
+    } else {
+        suggestionsContainer.innerHTML = '';
+    }
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+        suggestionsContainer.innerHTML = '';
     }
 });
 
@@ -195,6 +272,9 @@ async function getWeatherData(city) {
         
         const location = geocodingData.results[0];
         const { latitude, longitude, name, country } = location;
+        
+        // Save selected city to localStorage 
+        saveSelectedCity(name, country);
         
         // Then get the weather data
         await getWeatherByCoordinates(latitude, longitude, name, country);
@@ -341,6 +421,9 @@ function displayWeatherData(data) {
     visibility.textContent = `${(data.visibility / 1000).toFixed(1)} km`;
     cloudiness.textContent = `${data.clouds.all}%`;
     
+    // Generate and display weather suggestions
+    generateWeatherSuggestions(data);
+    
     hideLoading();
     showMainContent();
 }
@@ -417,4 +500,223 @@ function showError(message) {
     mainContent.classList.add('hide');
     errorContainer.classList.remove('hide');
     errorMessage.textContent = message;
-} 
+}
+
+// Function to save selected city to localStorage
+function saveSelectedCity(city, country) {
+    // Store the city and country
+    localStorage.setItem('selectedCity', city);
+    localStorage.setItem('selectedCountry', country);
+    
+    // Also store the original city name to match with pattern cities
+    const cityLower = city.toLowerCase();
+    
+    // Check if it's one of our metro cities (approximate matching)
+    const metroMappings = {
+        'delhi': 'delhi',
+        'new delhi': 'delhi',
+        'mumbai': 'mumbai',
+        'bombay': 'mumbai',
+        'kolkata': 'kolkata',
+        'calcutta': 'kolkata',
+        'chennai': 'chennai',
+        'madras': 'chennai',
+        'bangalore': 'bangalore',
+        'bengaluru': 'bangalore',
+        'hyderabad': 'hyderabad',
+        'ahmedabad': 'ahmedabad',
+        'pune': 'pune',
+        'jaipur': 'jaipur',
+        'lucknow': 'lucknow'
+    };
+    
+    // Default to Delhi if no match (can be changed to any default)
+    let matchedMetroCity = 'delhi';
+    
+    // Check for exact match first
+    if (metroMappings[cityLower]) {
+        matchedMetroCity = metroMappings[cityLower];
+    } else if (country === 'India') {
+        // For Indian cities not in our list, find closest match
+        const metroNames = Object.keys(metroMappings);
+        // Find if city contains any metro name or vice versa
+        for (const metroName of metroNames) {
+            if (cityLower.includes(metroName) || metroName.includes(cityLower)) {
+                matchedMetroCity = metroMappings[metroName];
+                break;
+            }
+        }
+    }
+    
+    localStorage.setItem('selectedMetroCity', matchedMetroCity);
+}
+
+// Generate weather-based suggestions
+function generateWeatherSuggestions(data) {
+    const temp = data.main.temp;
+    const weatherCode = data.weather[0].id;
+    const weatherMain = data.weather[0].main;
+    const windSpeed = data.wind.speed;
+    const humidity = data.main.humidity;
+    const clouds = data.clouds.all;
+    const timeOfDay = data.weather[0].icon.includes('d') ? 'day' : 'night';
+    
+    // Activity suggestions
+    const activities = getActivitySuggestions(temp, weatherMain, windSpeed, clouds, timeOfDay);
+    activitySuggestion.innerHTML = `
+        <i class="fas fa-running"></i>
+        <strong>Activities:</strong>
+        <span class="suggestion-text">${activities}</span>
+    `;
+    
+    // Clothing suggestions
+    const clothing = getClothingSuggestions(temp, weatherMain, windSpeed);
+    clothingSuggestion.innerHTML = `
+        <i class="fas fa-tshirt"></i>
+        <strong>Clothing:</strong>
+        <span class="suggestion-text">${clothing}</span>
+    `;
+    
+    // Health tips
+    const health = getHealthTips(temp, weatherMain, humidity, data.main.pressure);
+    healthTip.innerHTML = `
+        <i class="fas fa-heartbeat"></i>
+        <strong>Health Tip:</strong>
+        <span class="suggestion-text">${health}</span>
+    `;
+}
+
+// Get activity suggestions based on weather conditions
+function getActivitySuggestions(temp, weatherMain, windSpeed, clouds, timeOfDay) {
+    // Indoor vs outdoor recommendation
+    let recommendation = '';
+    
+    if (weatherMain === 'Clear' || weatherMain === 'Partly cloudy') {
+        if (temp > 15 && temp < 30 && windSpeed < 8) {
+            if (timeOfDay === 'day') {
+                recommendation = "Perfect weather for outdoor activities! Consider hiking, cycling, or having a picnic.";
+            } else {
+                recommendation = "Great evening for outdoor dining or stargazing.";
+            }
+        } else if (temp >= 30) {
+            recommendation = "Good for water activities like swimming or boating. Avoid strenuous outdoor exercise during peak heat.";
+        } else if (temp <= 15 && temp > 5) {
+            recommendation = "Good for outdoor activities with proper clothing. Consider walking, jogging, or cycling.";
+        } else {
+            recommendation = "Quite cold - indoor activities recommended unless dressed for winter sports.";
+        }
+    } else if (weatherMain === 'Cloudy' && windSpeed < 7) {
+        recommendation = "Suitable for outdoor activities, but consider having an indoor backup plan.";
+    } else if (weatherMain === 'Rain' || weatherMain === 'Drizzle') {
+        if (windSpeed < 5) {
+            recommendation = "Light rain - outdoor activities possible with rain gear. Great for museums and indoor attractions.";
+        } else {
+            recommendation = "Weather not ideal for outdoor activities. Consider museums, cinemas, or indoor sports.";
+        }
+    } else if (weatherMain === 'Thunderstorm') {
+        recommendation = "Stay indoors! Great time for reading, movies, or indoor games.";
+    } else if (weatherMain === 'Snow') {
+        if (windSpeed < 5) {
+            recommendation = "Great conditions for snow activities like skiing or building a snowman.";
+        } else {
+            recommendation = "Snowy and windy - best to stay indoors with hot drinks and indoor entertainment.";
+        }
+    } else if (weatherMain === 'Fog' || weatherMain === 'Mist') {
+        recommendation = "Reduced visibility - indoor activities recommended or extreme caution if going outside.";
+    } else {
+        recommendation = "Consider indoor activities like visiting museums, reading, or catching up on movies.";
+    }
+    
+    return recommendation;
+}
+
+// Get clothing suggestions based on weather
+function getClothingSuggestions(temp, weatherMain, windSpeed) {
+    let clothing = '';
+    
+    // Temperature-based clothing suggestions
+    if (temp >= 30) {
+        clothing = "Wear light, breathable clothing, sun hat, and sunglasses. Don't forget sunscreen!";
+    } else if (temp >= 25 && temp < 30) {
+        clothing = "Light clothing recommended. Consider a light long-sleeve for sun protection.";
+    } else if (temp >= 20 && temp < 25) {
+        clothing = "Comfortable temperature for light layers, short sleeves during day, maybe a light jacket for evening.";
+    } else if (temp >= 15 && temp < 20) {
+        clothing = "Light to medium layers recommended. A light jacket or sweater would be comfortable.";
+    } else if (temp >= 10 && temp < 15) {
+        clothing = "Medium layers with a jacket or warm sweater recommended.";
+    } else if (temp >= 5 && temp < 10) {
+        clothing = "Warm layers with a proper jacket and consider gloves and a hat.";
+    } else if (temp >= 0 && temp < 5) {
+        clothing = "Winter jacket, hat, gloves, and warm layers needed.";
+    } else {
+        clothing = "Heavy winter clothing required. Multiple warm layers, insulated coat, winter accessories.";
+    }
+    
+    // Add weather-specific advice
+    if (weatherMain === 'Rain' || weatherMain === 'Drizzle') {
+        clothing += " Bring a waterproof jacket or umbrella.";
+    } else if (weatherMain === 'Snow') {
+        clothing += " Wear waterproof boots and clothing.";
+    } else if (windSpeed > 7) {
+        clothing += " Consider wind protection as it's quite breezy.";
+    }
+    
+    return clothing;
+}
+
+// Get health tips based on weather conditions
+function getHealthTips(temp, weatherMain, humidity, pressure) {
+    let healthTip = '';
+    
+    // Temperature-related health tips
+    if (temp >= 32) {
+        healthTip = "High heat - stay hydrated, seek shade, and limit strenuous activities. Watch for signs of heat exhaustion.";
+    } else if (temp >= 28 && temp < 32) {
+        healthTip = "Warm conditions - stay hydrated and take breaks from the heat when needed.";
+    } else if (temp <= 0) {
+        healthTip = "Freezing conditions - protect extremities from frostbite and watch for signs of hypothermia.";
+    } else if (temp < 5) {
+        healthTip = "Cold conditions - dress warmly and stay dry to prevent heat loss.";
+    }
+    
+    // Weather-specific health tips
+    if (weatherMain === 'Rain' || weatherMain === 'Snow') {
+        if (healthTip) {
+            healthTip += " Also, stay dry to prevent chilling.";
+        } else {
+            healthTip = "Stay dry to maintain body temperature and comfort.";
+        }
+    }
+    
+    // Air quality and humidity related tips
+    if (weatherMain === 'Fog' || weatherMain === 'Mist' || weatherMain === 'Haze') {
+        if (healthTip) {
+            healthTip += " Air quality may be affected - those with respiratory issues should take precautions.";
+        } else {
+            healthTip = "Reduced air quality - those with respiratory issues should limit outdoor exposure.";
+        }
+    }
+    
+    // Humidity tips
+    if (humidity > 80 && temp > 25) {
+        if (healthTip) {
+            healthTip += " High humidity may make it feel hotter - take extra hydration breaks.";
+        } else {
+            healthTip = "High humidity - stay hydrated and be aware of increased heat stress on the body.";
+        }
+    } else if (humidity < 30) {
+        if (healthTip) {
+            healthTip += " Dry air may cause skin and respiratory dryness - stay hydrated.";
+        } else {
+            healthTip = "Low humidity - maintain hydration and consider moisturizing skin.";
+        }
+    }
+    
+    // Default health tip if none of the above
+    if (!healthTip) {
+        healthTip = "Weather conditions are generally comfortable. Stay hydrated and enjoy your day!";
+    }
+    
+    return healthTip;
+}

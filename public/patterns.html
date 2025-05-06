@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Pattern Analysis - Metro Cities of India</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <!-- Chart.js -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/patterns.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Weather Pattern Analysis</h1>
+            <p class="subtitle">Weather Pattern Analysis and Forecasting for Climate Resilience</p>
+            
+            <nav class="navbar">
+                <a href="index.html" class="nav-link"><i class="fas fa-cloud-sun"></i> Current Weather</a>
+                <a href="patterns.html" class="nav-link active"><i class="fas fa-chart-line"></i> Weather Patterns</a>
+            </nav>
+            
+            <div class="city-selector">
+                <label for="city-select">Select Metro City:</label>
+                <select id="city-select">
+                    <option value="delhi">Delhi</option>
+                    <option value="mumbai">Mumbai</option>
+                    <option value="kolkata">Kolkata</option>
+                    <option value="chennai">Chennai</option>
+                    <option value="bangalore">Bangalore</option>
+                    <option value="hyderabad">Hyderabad</option>
+                    <option value="ahmedabad">Ahmedabad</option>
+                    <option value="pune">Pune</option>
+                    <option value="jaipur">Jaipur</option>
+                    <option value="lucknow">Lucknow</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="loading-container">
+            <div class="loader"></div>
+        </div>
+
+        <main>
+            <div class="insights-panel">
+                <h2>Climate Insights</h2>
+                <div class="insights-content">
+                    <p id="city-description"></p>
+                    <div class="climate-stats">
+                        <div class="stat-box">
+                            <h3>Temperature Trend</h3>
+                            <p id="temp-trend"></p>
+                            <span id="temp-change" class="change-value"></span>
+                        </div>
+                        <div class="stat-box">
+                            <h3>Rainfall Pattern</h3>
+                            <p id="rain-trend"></p>
+                            <span id="rain-change" class="change-value"></span>
+                        </div>
+                        <div class="stat-box">
+                            <h3>Extreme Events</h3>
+                            <p id="extreme-events"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-selection">
+                    <button class="chart-btn active" data-chart="temperature">Temperature</button>
+                    <button class="chart-btn" data-chart="rainfall">Rainfall</button>
+                    <button class="chart-btn" data-chart="extreme">Extreme Events</button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="main-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="prediction-section">
+                <h2>Climate Prediction</h2>
+                <div class="prediction-content">
+                    <div class="prediction-period">
+                        <button class="period-btn active" data-period="short">Short-term (5 years)</button>
+                        <button class="period-btn" data-period="medium">Medium-term (10 years)</button>
+                        <button class="period-btn" data-period="long">Long-term (25 years)</button>
+                    </div>
+                    <div class="prediction-charts">
+                        <div class="prediction-chart">
+                            <h3>Temperature Prediction</h3>
+                            <canvas id="temp-prediction-chart"></canvas>
+                        </div>
+                        <div class="prediction-chart">
+                            <h3>Rainfall Prediction</h3>
+                            <canvas id="rain-prediction-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="prediction-summary">
+                        <h3>Prediction Summary</h3>
+                        <p id="prediction-text"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resilience-section">
+                <h2>Climate Resilience Recommendations</h2>
+                <div class="recommendations">
+                    <div class="recommendation-card">
+                        <i class="fas fa-house-flood-water"></i>
+                        <h3>Infrastructure</h3>
+                        <p id="infra-recommendation"></p>
+                    </div>
+                    <div class="recommendation-card">
+                        <i class="fas fa-seedling"></i>
+                        <h3>Agriculture</h3>
+                        <p id="agri-recommendation"></p>
+                    </div>
+                    <div class="recommendation-card">
+                        <i class="fas fa-hand-holding-droplet"></i>
+                        <h3>Water Management</h3>
+                        <p id="water-recommendation"></p>
+                    </div>
+                    <div class="recommendation-card">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Energy</h3>
+                        <p id="energy-recommendation"></p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div class="data-sources">
+            <h3>Data Sources</h3>
+            <p>Historical weather data (1973-2023) from Indian Meteorological Department and Global Historical Climatology Network.</p>
+            <p>Analysis performed using time series forecasting methods, machine learning algorithms, and statistical modeling.</p>
+        </div>
+
+        <footer>
+            <p>&copy; 2023 Weather Pattern Analysis. All data is for educational purposes only.</p>
+        </footer>
+    </div>
+
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="js/patterns.js"></script>
+</body>
+</html> 
